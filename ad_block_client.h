@@ -10,7 +10,7 @@
 #include "./bad_fingerprint.h"
 #include "./cosmetic_filter.h"
 #include "BloomFilter.h"
-#include "HashSet.h"
+#include "./hash_set.h"
 
 class AdBlockClient {
  public:

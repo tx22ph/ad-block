@@ -349,19 +349,19 @@ void parseFilter(const char *input, const char *end, Filter *f,
 
   if (f->filterType == FTElementHiding) {
     if (simpleCosmeticFilters && !f->domainList) {
-      simpleCosmeticFilters->add(CosmeticFilter(data));
+      simpleCosmeticFilters->Add(CosmeticFilter(data));
     }
   } else if (f->filterType == FTElementHidingException) {
     if (simpleCosmeticFilters && f->domainList) {
-      simpleCosmeticFilters->remove(CosmeticFilter(data));
+      simpleCosmeticFilters->Remove(CosmeticFilter(data));
     }
   } else if (exceptionBloomFilter
       && (f->filterType & FTException) && (f->filterType & FTHostOnly)) {
     // cout << "add host anchored exception bloom filter: " << f->host << endl;
-    hostAnchoredExceptionHashSet->add(*f);
+    hostAnchoredExceptionHashSet->Add(*f);
   } else if (hostAnchoredHashSet && (f->filterType & FTHostOnly)) {
     // cout << "add host anchored bloom filter: " << f->host << endl;
-    hostAnchoredHashSet->add(*f);
+    hostAnchoredHashSet->Add(*f);
   } else if (AdBlockClient::getFingerprint(fingerprintBuffer, *f)) {
     if (exceptionBloomFilter && f->filterType & FTException) {
       exceptionBloomFilter->add(fingerprintBuffer);
@@ -502,7 +502,7 @@ void discoverMatchingPrefix(BadFingerprintsHashSet *badFingerprintsHashSet,
       memcpy(sz, str + i, prefixLen);
       // cout <<  "Bad fingerprint: " << sz << endl;
       if (badFingerprintsHashSet) {
-        badFingerprintsHashSet->add(BadFingerprint(sz));
+        badFingerprintsHashSet->Add(BadFingerprint(sz));
       }
       // We only want the first bad fingerprint since that's the one
       // that led us here.
@@ -537,7 +537,7 @@ bool isHostAnchoredHashSetMiss(const char *input, int inputLen,
 
   while (start != inputHost) {
     if (*(start - 1) == '.') {
-      Filter *filter = hashSet->find(Filter(start,
+      Filter *filter = hashSet->Find(Filter(start,
             static_cast<int>(inputHost + inputHostLen - start),
             nullptr, start, inputHostLen - (start - inputHost)));
       if (filter && filter->matches(input, inputLen,
@@ -548,7 +548,7 @@ bool isHostAnchoredHashSetMiss(const char *input, int inputLen,
     start--;
   }
 
-  Filter *filter = hashSet->find(Filter(start,
+  Filter *filter = hashSet->Find(Filter(start,
         static_cast<int>(inputHost + inputHostLen - start), nullptr,
         start, inputHostLen));
   if (!filter) {
@@ -722,9 +722,9 @@ bool AdBlockClient::initHashSet(HashSet<Filter> **pp, char *buffer, int len) {
     delete *pp;
   }
   if (len > 0) {
-    *pp = new HashSet<Filter>(0);
+    *pp = new HashSet<Filter>(0, false);
 
-    return (*pp)->deserialize(buffer, len);
+    return (*pp)->Deserialize(buffer, len);
   }
 
   return true;
@@ -732,7 +732,7 @@ bool AdBlockClient::initHashSet(HashSet<Filter> **pp, char *buffer, int len) {
 
 void setFilterBorrowedMemory(Filter *filters, int numFilters) {
   for (int i = 0; i < numFilters; i++) {
-    filters[i].borrowedData = true;
+    filters[i].borrowed_data = true;
   }
 }
 
@@ -752,12 +752,12 @@ bool AdBlockClient::parse(const char *input) {
   if (!hostAnchoredHashSet) {
     // Optimized to be 1:1 with the easylist / easyprivacy
     // number of host anchored hosts.
-    hostAnchoredHashSet = new HashSet<Filter>(18000);
+    hostAnchoredHashSet = new HashSet<Filter>(18000, false);
   }
   if (!hostAnchoredExceptionHashSet) {
     // Optimized to be 1:1 with the easylist / easyprivacy
     // number of host anchored exception hosts.
-    hostAnchoredExceptionHashSet = new HashSet<Filter>(2000);
+    hostAnchoredExceptionHashSet = new HashSet<Filter>(2000, false);
   }
 
   const char *p = input;
@@ -773,7 +773,7 @@ bool AdBlockClient::parse(const char *input) {
   int newNumHostAnchoredExceptionFilters = 0;
 
   // Simple cosmetic filters apply to all sites without exception
-  HashSet<CosmeticFilter> simpleCosmeticFilters(1000);
+  HashSet<CosmeticFilter> simpleCosmeticFilters(1000, false);
 
   // Parsing does 2 passes, one just to determine the type of information we'll
   // need to setup.  Note that the library will be used on a variety of builds
@@ -999,7 +999,7 @@ bool AdBlockClient::parse(const char *input) {
 
 #ifdef PERF_STATS
   cout << "Simple cosmetic filter size: "
-    << simpleCosmeticFilters.size() << endl;
+    << simpleCosmeticFilters.GetSize() << endl;
 #endif
 
   return true;
@@ -1064,14 +1064,14 @@ char * AdBlockClient::serialize(int *totalSize,
   char *hostAnchoredHashSetBuffer = nullptr;
   if (hostAnchoredHashSet) {
     hostAnchoredHashSetBuffer =
-      hostAnchoredHashSet->serialize(&hostAnchoredHashSetSize);
+      hostAnchoredHashSet->Serialize(&hostAnchoredHashSetSize);
   }
 
   uint32_t hostAnchoredExceptionHashSetSize = 0;
   char *hostAnchoredExceptionHashSetBuffer = nullptr;
   if (hostAnchoredExceptionHashSet) {
     hostAnchoredExceptionHashSetBuffer =
-      hostAnchoredExceptionHashSet->serialize(
+      hostAnchoredExceptionHashSet->Serialize(
           &hostAnchoredExceptionHashSetSize);
   }
 
@@ -1147,7 +1147,7 @@ char * AdBlockClient::serialize(int *totalSize,
 int deserializeFilters(char *buffer, Filter *f, int numFilters) {
   int pos = 0;
   for (int i = 0; i < numFilters; i++) {
-    f->borrowedData = true;
+    f->borrowed_data = true;
     sscanf(buffer + pos, "%x,%x,%x",
         reinterpret_cast<unsigned int*>(&f->filterType),
         reinterpret_cast<unsigned int*>(&f->filterOption),
@@ -1241,7 +1241,7 @@ void AdBlockClient::enableBadFingerprintDetection() {
   badFingerprintsHashSet = new BadFingerprintsHashSet();
   for (unsigned int i = 0; i < sizeof(badFingerprints)
       / sizeof(badFingerprints[0]); i++) {
-    badFingerprintsHashSet->add(BadFingerprint(badFingerprints[i]));
+    badFingerprintsHashSet->Add(BadFingerprint(badFingerprints[i]));
   }
 }
 
