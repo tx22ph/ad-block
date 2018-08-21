@@ -7,10 +7,12 @@
     "test": "test"
   },
   "dependencies": {
-    "bloom-filter-cpp": "^1.1.6",
+    "bloom-filter-cpp": "^1.1.8",
     "cppunitlite": "^1.0.0",
     "hashset-cpp": "^1.0.18",
-    "nan": "^2.2.1"
+    "nan": "^2.2.1",
+    "prebuild": "^7.6.2",
+    "prebuild-install": "^5.0.0"
   },
   "devDependencies": {
     "commander": "^2.9.0",
@@ -29,7 +31,7 @@
     "sample": "make sample",
     "perf": "make perf",
     "preinstall": "npm install bloom-filter-cpp@1.1.8 && npm install hashset-cpp",
-    "install": "node-gyp rebuild",
+    "install": "prebuild-install --verbose -t 1.8.1 -r electron || node-gyp rebuild",
     "lint": "npm run lint-cpp && npm run lint-js",
     "lint-cpp": "./scripts/cpplint.py",
     "lint-js": "standard",
@@ -40,17 +42,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brave/ad-block.git"
+    "url": "git+https://github.com/tonygparsehub/ad-block.git"
   },
   "author": "Brian R. Bondy <netzen@gmail.com> (http://www.brianbondy.com)",
   "license": "MPL-2.0",
   "gypfile": true,
   "bugs": {
-    "url": "https://github.com/brave/ad-block/issues"
+    "url": "https://github.com/tonygparsehub/ad-block/issues"
   },
-  "homepage": "https://github.com/brave/ad-block#readme",
+  "homepage": "https://github.com/tonygparsehub/ad-block#readme",
   "pre-commit": [
     "lint-cpp",
     "lint-js"
-  ]
+  ],
+  "_from": ""
 }
